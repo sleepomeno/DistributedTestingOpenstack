@@ -1,0 +1,31 @@
+===========
+HOST STATS
+===========
+
+1 hosts have been used!
+
+########################################################
+Host-Name: MySuperString!
+Uptime: 30 seconds
+Number of tests: 11
+State: READY
+
++-----------------------------------------------------------+----------------+----------+---------+
+|                           Method                          |      Host      |  Runtime | Success |
++-----------------------------------------------------------+----------------+----------+---------+
+|                    at.ac.tuwien.infosys.praktikum.Pi.test | MySuperString! | 15785 ms |  PASSED |
+|            at.ac.tuwien.infosys.praktikum.Pi.testNegative | MySuperString! |    16 ms |  PASSED |
+|          at.ac.tuwien.infosys.praktikum.Example.testError | MySuperString! |     4 ms |    FAIL |
+|        at.ac.tuwien.infosys.praktikum.Example.testFailure | MySuperString! |     0 ms |    FAIL |
+|      at.ac.tuwien.infosys.praktikum.Example.testTestClass | MySuperString! |    23 ms |  PASSED |
+|              at.ac.tuwien.infosys.praktikum.Example.test2 | MySuperString! |  1001 ms |  PASSED |
+|              at.ac.tuwien.infosys.praktikum.Example.test1 | MySuperString! |  1001 ms |  PASSED |
+|              at.ac.tuwien.infosys.praktikum.Example.test3 | MySuperString! |  1000 ms |  PASSED |
+|         at.ac.tuwien.infosys.praktikum.Example.testIgnore | MySuperString! |     0 ms |  PASSED |
+|   at.ac.tuwien.infosys.praktikum.Example.testScriptEngine | MySuperString! |   109 ms |  PASSED |
+| at.ac.tuwien.infosys.praktikum.Example.testNotImplemented | MySuperString! |     1 ms |  PASSED |
++-----------------------------------------------------------+----------------+----------+---------+
+
+########################################################
+
+

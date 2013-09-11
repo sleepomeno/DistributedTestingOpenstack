@@ -1,0 +1,16 @@
+<configuration scan="false">
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%-30(%d{HH:mm:ss.SSS} [%thread]) %-5level %logger{32} - %msg%n</pattern>
+        </layout>
+    </appender>
+
+    <logger name="org.mozartspaces.core">
+        <level value="info" />
+    </logger>
+
+    <root>
+        <level value="debug" />
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

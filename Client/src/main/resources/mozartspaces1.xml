@@ -1,0 +1,195 @@
+<!--
+    MozartSpaces core configuration:
+    - loaded from a file named mozartspaces1.xml or the file specified with the system property
+      "mozartspaces.configurationFile"
+    - the system property can be set with "java -Dmozartspaces.configurationFile=<configfile> ..."
+    - the search order for the configuration file is (only relevant if only the file name or a relative path is
+      specified):
+      a) current directory
+      b) user's home directory (user.home)
+      c) classpath
+-->
+<mozartspacesCoreConfig>
+<!-- This default configuration is also contained in the code and used when no configuration file is found -->
+
+    <!-- Determines whether the core has an embedded space or is just a client -->
+    <embeddedSpace>true</embeddedSpace>
+    
+    <!-- Core Processor (XP) configuration -->
+    <coreProcessor>
+        <!--
+            The number of threads for the XP thread pool - supported values are:
+            > 0: a fixed thread pool with the specified number of threads is used.
+            Use the values below with caution!
+              0: a synchronous executor service without a thread pool is used.
+            < 0: a cached thread pool (unbounded number of threads) is used.
+        -->
+        <threads>10</threads>
+    </coreProcessor>
+
+    <!-- Serializer configuration, multiple serializers are supported -->
+    <serializers>
+        <!-- 
+            Serializer name - the supported values are:
+            * javabuiltin: built-in binary serialization
+            Serializers below are not in the core but extra modules:
+            * jaxb: XML marshalling with JAXB, compliant with XVSMP schema
+                    (Cannot be used for copying entries!)
+                    This serializer requires the module mozartspaces-xvsmp-jaxb!
+            * kryo: fast binary serialization
+                    (entry classes need to have a no-arg constructur which may be private)
+                    This serializer requires the module mozartspaces-xvsmp-kryo!
+            * xstream-json: XStream serializer with JSON driver (Jettison)
+              This serializer requires the module mozartspaces-xvsmp-xstream!
+            * xstream-xml: XStream serializer with default XML driver
+              This serializer requires the module mozartspaces-xvsmp-xstream!
+            Custom serializers:
+            * specify the name of the serializer class which needs to have a public no-arg
+              constructor and implement org.mozartspaces.core.util.Serializer
+        -->
+        <serializer>javabuiltin</serializer>
+    </serializers>
+
+    <!-- Remoting configuration -->
+    <remoting>
+        <!-- the default scheme, used to select the sender if no scheme is specified in the destination's space URI -->
+        <defaultScheme>xvsm</defaultScheme>
+        <!-- Host name or IP address to bind to (resolved with InetAddress.getByName) -->
+        <bindHost>0.0.0.0</bindHost>
+        <!-- Configuration of transport handlers with senders and receivers -->
+        <transports>
+            <!-- multiple transports can be used concurrently (identified by the scheme) -->
+            <!-- 
+                TCP Socket transport, with scheme (used to distinguish transports)
+                standard synchronous socket I/O (java.io)
+            -->
+            <tcpsocket scheme="xvsm">
+                <!-- 
+                    The number of threads for the receiver/sender thread pool:
+                    * The configuration values are as for the XP thread pool.
+                    * The default configuration (1000 threads) allows 500 open connections.
+                    * Adjust, when more connections should be supported!
+                    * You need at least 2 threads for each (open) connection.
+                -->
+                <threads>1000</threads>
+                <!-- exclusive port to listen for incoming connections -->
+                <receiverPort>9876</receiverPort>
+                <!-- the serializer to use, can be a serializer ID or an Apache Commons configuration as below -->
+                <serializer>${serializers.serializer(0)}</serializer>
+            </tcpsocket>
+            <!-- REST transport (EXPERIMENTAL!) -->
+            <!--
+            This transport requires the module mozartspaces-transport-rest-common and mozartspaces-transport-rest-jetty!
+            <rest scheme="http">
+                <port>9877</port>
+            </rest> 
+            -->      
+            <!-- 
+                other transports could be added, e.g. NIO (with Netty)                
+            -->
+        </transports>
+    </remoting>
+
+    <!-- Configuration of the Space URI, identifier and also locator of a space -->
+    <spaceURI>${remoting.defaultScheme}://localhost:${remoting.transports.tcpsocket.receiverPort}</spaceURI>
+    <!-- example above with variables, expanded to "xvsm://localhost:9876" -->
+
+    <!-- Security configuration (EXPERIMENTAL!) -->
+    <security>
+        <!-- check authentication (credentials, SSO token) of requests with an aspect (RequestAuthenticationAspect) -->
+        <authentication enabled="false">
+            <!-- The (enabled) authentication requires the module mozartspaces-security-openam! -->
+            <!-- TODO add name for different types of authentication (SSO token, credentials) -->
+            <!-- cache SSO token validity and attributes -->
+            <!-- <cacheResults>true</cacheResults> -->
+            <!-- TODO: configure caching timeout or use token timeout? -->
+        </authentication>
+        <!-- enable authorization (create policy container) -->
+        <authorization enabled="false">
+            <!-- whether all requests should be authorized with an aspect (RequestAuthorizationAspect) -->
+            <authorizeRequests>false</authorizeRequests>
+        </authorization>
+    </security>
+    
+    <!-- Persistence profile configuration -->
+    <persistence>
+        <!--
+            The following profiles are supported:
+            * in-memory: actually no persistence, just collections in RAM            
+            * berkeleydb-lazy: database log is asynchronously written to disk (NO_SYNC)
+            * berkeleydb-transactional: database log is synchronously written to disk on TX commit (WRITE_NO_SYNC)
+            * berkeleydb-transactional-sync: as above, and additionally flushes the log (SYNC)
+              The difference between the Berkeley DB profiles is the configured sync policy
+              (com.sleepycat.je.Durability.SyncPolicy)
+              The Berkeley-DB profiles requires the module mozartspaces-capi3-berkeleydb!
+            * sqlite-android: built-in SQLite database of Android
+              This profile works only on MozartSpaces for Android!
+         -->
+        <profile>in-memory</profile>
+        <!-- the serializer to use, can be a serializer ID or an Apache Commons configuration as below -->
+        <serializer>${serializers.serializer(0)}</serializer>
+        <!-- the size of the serializer cache, requires mozartspaces-core-cache for values > 0 -->
+        <serializerCacheSize>0</serializerCacheSize>
+        <properties>
+            <property key="berkeley-location">/tmp/xvsm1</property>
+            <!-- 
+            Properties for Berkeley DB:
+            * berkeley-location: path to the database files folder
+              default value: System.getProperty("java.io.tmpdir") + File.separator + "xvsm";
+            <property key="berkeley-location">/path/to/db/files</property>
+            * berkeley-cache-size: size of the Berkeley DB cache in bytes
+            <property key="berkeley-cache-size">10000000</property>            
+            Properties for SQLite Android:
+            * sqlite-db-name: name of the SQLite database
+            <property key="sqlite-db-name">mozart-spaces</property>
+            -->
+        </properties>
+    </persistence>
+    
+    <!-- Configuration of the entry copier -->
+    <!-- copyContext: should the request context also be copied? -->
+    <entryCopier copyContext="false">
+        
+        <!-- supported elements are one of the following elements: -->
+        
+        <!-- No entry copier, is the default and can be omitted -->
+        <!-- <none /> -->
+        
+        <!-- Serializing entry copier, uses a serializer to copy objects -->
+        <!-- <serializing>${serializers.serializer(0)}</serializing> -->
+        <!-- the element value can be a serializer ID or a variable as below -->
+        
+        <!-- Cloning entry copier, entries need to implement MzsCloneable -->
+        <!-- <cloning /> -->
+    </entryCopier>
+
+    <!-- Configuration of custom coordinators -->
+    <coordinators>
+        <!-- This is an example for illustration. The AnyCoordinator is a predefined, integrated coordinator -->
+        <coordinator>
+            <!-- The coordinator API class (must implement Coordinator) -->
+            <apiClass>org.mozartspaces.capi3.AnyCoordinator</apiClass>
+            <!-- The selector API class (must implement Selector) -->
+            <apiSelectorClass>org.mozartspaces.capi3.AnyCoordinator$AnySelector</apiSelectorClass>
+            <!-- The CAPI-3 coordinator translator class (must implement CoordinatorTranslator) -->
+            <capi3TranslatorClass>org.mozartspaces.capi3.javanative.coordination.DefaultAnyCoordinator$AnyCoordinatorTranslator</capi3TranslatorClass>
+            <!-- The CAPI-3 selector translator class (must implement SelectorTranslator) -->
+            <capi3SelectorTranslatorClass>org.mozartspaces.capi3.javanative.coordination.DefaultAnyCoordinator$AnySelectorTranslator</capi3SelectorTranslatorClass>
+            <!-- Custom coordinators are currently not supported by the JAXB serializer! -->
+            <!-- The elements below are currently not supported! -->
+            <!-- 
+            <jaxbCreator>org.mozartspaces.xvsmp.util.AnyCoordinatorMapper$AnyCoordinatorCreator</jaxbCreator>
+            <jaxbSelectorCreator>org.mozartspaces.xvsmp.util.AnyCoordinatorMapper$AnySelectorCreator</jaxbSelectorCreator>
+            <jaxbCoordDataCreator>org.mozartspaces.xvsmp.util.AnyCoordinatorMapper$AnyDataCreator</jaxbCoordDataCreator>
+             -->
+        </coordinator>
+    </coordinators>
+    
+    <!-- 
+        CAPI-3 implementation to use, the supported values are:
+        * javanative: implementation using only JDK classes (collections)
+        In previous internal development versions a now abandoned database implementation ("db") was supported.
+    -->
+    <capi3>javanative</capi3>
+
+</mozartspacesCoreConfig>
